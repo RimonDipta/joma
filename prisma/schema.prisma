@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  CASH
+  BANK
+  MOBILE_WALLET
+  CREDIT_CARD
+  INVESTMENT
+  OTHER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  email            String    @unique
+  passwordHash     String?
+  image            String?
+  emailVerified    DateTime?
+  baseCurrencyCode String    @default("BDT")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
+
+  baseCurrency Currency      @relation("UserBaseCurrency", fields: [baseCurrencyCode], references: [code], onDelete: Restrict)
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+
+  @@index([baseCurrencyCode])
+}
+
+model Currency {
+  code          String   @id @db.VarChar(3)
+  name          String
+  symbol        String
+  decimalDigits Int      @default(2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  users    User[]    @relation("UserBaseCurrency")
+  accounts Account[]
+}
+
+model Account {
+  id             String      @id @default(cuid())
+  userId         String
+  name           String
+  type           AccountType
+  currencyCode   String      @db.VarChar(3)
+  openingBalance Decimal     @default(0) @db.Decimal(19, 4)
+  institution    String?
+  color          String?
+  icon           String?
+  isArchived     Boolean     @default(false)
+  createdAt      DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @db.Timestamptz(3)
+
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency          Currency      @relation(fields: [currencyCode], references: [code], onDelete: Restrict)
+  transactions      Transaction[] @relation("AccountTransactions")
+  incomingTransfers Transaction[] @relation("TransferDestination")
+
+  @@unique([userId, name])
+  @@index([userId, type])
+  @@index([currencyCode])
+}
+
+model Category {
+  id        String       @id @default(cuid())
+  userId    String
+  name      String
+  type      CategoryType
+  color     String?
+  icon      String?
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @updatedAt @db.Timestamptz(3)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name, type])
+  @@index([userId, type])
+}
+
+model Transaction {
+  id                String          @id @default(cuid())
+  userId            String
+  accountId         String
+  categoryId        String?
+  transferAccountId String?
+  type              TransactionType
+  amount            Decimal         @db.Decimal(19, 4)
+  transferAmount    Decimal?        @db.Decimal(19, 4)
+  exchangeRate      Decimal?        @db.Decimal(20, 10)
+  description       String
+  note              String?
+  occurredAt        DateTime        @db.Timestamptz(3)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account         Account   @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Restrict)
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  transferAccount Account?  @relation("TransferDestination", fields: [transferAccountId], references: [id], onDelete: Restrict)
+
+  @@index([userId, occurredAt])
+  @@index([accountId, occurredAt])
+  @@index([categoryId])
+  @@index([transferAccountId])
+  @@index([type, occurredAt])
+}
