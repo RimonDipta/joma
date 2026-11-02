@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   ArrowDownLeft,
-  ArrowDownRight,
   ArrowLeftRight,
   ArrowUpRight,
   Bell,
@@ -11,7 +10,6 @@ import {
   ChevronDown,
   CircleHelp,
   CreditCard,
-  Download,
   Ellipsis,
   FileText,
   Filter,
@@ -577,7 +575,7 @@ export default function Home() {
 
           <div className="mb-5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs leading-5 text-amber-200/80">
             Demo dashboard — all financial figures are sample data. Adding a
-            transaction only changes this page's temporary in-memory state.
+            transaction only changes this page&apos;s temporary in-memory state.
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
