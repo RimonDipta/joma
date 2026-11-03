@@ -33,17 +33,58 @@ model User {
   email            String    @unique
   passwordHash     String?
   image            String?
-  emailVerified    DateTime?
+  emailVerified    DateTime? @db.Timestamptz(3)
   baseCurrencyCode String    @default("BDT")
   createdAt        DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
 
-  baseCurrency Currency      @relation("UserBaseCurrency", fields: [baseCurrencyCode], references: [code], onDelete: Restrict)
-  accounts     Account[]
-  categories   Category[]
-  transactions Transaction[]
+  baseCurrency      Currency           @relation("UserBaseCurrency", fields: [baseCurrencyCode], references: [code], onDelete: Restrict)
+  accounts          Account[]
+  sessions          Session[]
+  financialAccounts FinancialAccount[]
+  categories        Category[]
+  transactions      Transaction[]
 
   @@index([baseCurrencyCode])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime @db.Timestamptz(3)
+
+  @@unique([identifier, token])
 }
 
 model Currency {
@@ -55,11 +96,11 @@ model Currency {
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 
-  users    User[]    @relation("UserBaseCurrency")
-  accounts Account[]
+  users    User[]             @relation("UserBaseCurrency")
+  accounts FinancialAccount[]
 }
 
-model Account {
+model FinancialAccount {
   id             String      @id @default(cuid())
   userId         String
   name           String
@@ -116,10 +157,10 @@ model Transaction {
   createdAt         DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
 
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account         Account   @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Restrict)
-  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  transferAccount Account?  @relation("TransferDestination", fields: [transferAccountId], references: [id], onDelete: Restrict)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account         FinancialAccount  @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Restrict)
+  category        Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  transferAccount FinancialAccount? @relation("TransferDestination", fields: [transferAccountId], references: [id], onDelete: Restrict)
 
   @@index([userId, occurredAt])
   @@index([accountId, occurredAt])
