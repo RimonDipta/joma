@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   ArrowDownLeft,
   ArrowLeftRight,
@@ -297,6 +298,8 @@ export default function Home({ userName, userEmail }: DashboardClientProps) {
   const [newAmount, setNewAmount] = useState("");
   const [newType, setNewType] = useState<"income" | "expense">("expense");
 
+  const router = useRouter();
+
   const visibleTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
       const matchesQuery = `${transaction.name} ${transaction.category}`
@@ -406,8 +409,14 @@ export default function Home({ userName, userEmail }: DashboardClientProps) {
               <button
                 key={label}
                 onClick={() => {
-                  setActiveNav(label);
                   setMobileMenuOpen(false);
+
+                  if (label === "Accounts") {
+                    router.push("/accounts");
+                    return;
+                  }
+
+                  setActiveNav(label);
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                   activeNav === label
