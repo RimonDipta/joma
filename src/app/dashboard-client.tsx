@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { signOut } from "next-auth/react";
 import {
   ArrowDownLeft,
   ArrowLeftRight,
@@ -27,6 +28,7 @@ import {
   Car,
   Laptop,
   House,
+  LogOut,
 } from "lucide-react";
 import {
   Area,
@@ -276,7 +278,12 @@ function DashboardChart() {
   );
 }
 
-export default function Home() {
+type DashboardClientProps = {
+  userName: string;
+  userEmail: string;
+};
+
+export default function Home({ userName, userEmail }: DashboardClientProps) {
   const [activeNav, setActiveNav] = useState("Overview");
   const [currency, setCurrency] = useState("BDT");
   const [period, setPeriod] = useState("This month");
@@ -284,6 +291,7 @@ export default function Home() {
   const [transactionType, setTransactionType] = useState("all");
   const [transactions, setTransactions] = useState(initialTransactions);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState("");
@@ -348,9 +356,9 @@ export default function Home() {
   }
 
   const currencyOptions = [
-    { value: "BDT", label: "BDT (৳)" },
+    { value: "BDT", label: "BDT (à§³)" },
     { value: "USD", label: "USD ($)" },
-    { value: "EUR", label: "EUR (€)" },
+    { value: "EUR", label: "EUR (â‚¬)" },
   ];
 
   return (
@@ -466,17 +474,48 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-4 flex items-center gap-3 rounded-xl p-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold">
-              R
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium">Your workspace</p>
-              <p className="mt-0.5 text-[10px] text-zinc-600">
-                Personal account
-              </p>
-            </div>
-            <Ellipsis size={17} className="text-zinc-500" />
+          <div className="relative mt-4">
+            <button
+              type="button"
+              onClick={() => setAccountMenuOpen((open) => !open)}
+              aria-expanded={accountMenuOpen}
+              aria-label="Open account menu"
+              className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lime-400/15 text-sm font-semibold text-lime-300">
+                {userName.trim().charAt(0).toUpperCase() || "U"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-zinc-200">
+                  {userName}
+                </p>
+                <p className="truncate text-[10px] text-zinc-500">
+                  {userEmail || "Personal account"}
+                </p>
+              </div>
+              <Ellipsis size={17} className="shrink-0 text-zinc-500" />
+            </button>
+
+            {accountMenuOpen && (
+              <div className="absolute bottom-full left-0 right-0 z-[60] mb-2 overflow-hidden rounded-xl border border-zinc-800 bg-[#18181b] shadow-xl">
+                <div className="border-b border-zinc-800 px-4 py-3">
+                  <p className="truncate text-xs font-medium text-zinc-200">
+                    {userName}
+                  </p>
+                  <p className="mt-1 truncate text-[10px] text-zinc-500">
+                    {userEmail}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signOut({ redirectTo: "/login" })}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-xs text-rose-400 transition hover:bg-rose-500/10"
+                >
+                  <LogOut size={15} />
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -574,7 +613,7 @@ export default function Home() {
           </div>
 
           <div className="mb-5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs leading-5 text-amber-200/80">
-            Demo dashboard — all financial figures are sample data. Adding a
+            Demo dashboard â€” all financial figures are sample data. Adding a
             transaction only changes this page&apos;s temporary in-memory state.
           </div>
 
@@ -607,7 +646,7 @@ export default function Home() {
                 {money(totals.income, currency)}
               </p>
               <p className="mt-3 text-[11px] text-zinc-500">
-                Recorded income · Demo data
+                Recorded income Â· Demo data
               </p>
             </Panel>
 
@@ -622,7 +661,7 @@ export default function Home() {
                 {money(totals.expenses, currency)}
               </p>
               <p className="mt-3 text-[11px] text-zinc-500">
-                Recorded expenses · Demo data
+                Recorded expenses Â· Demo data
               </p>
             </Panel>
 
@@ -636,7 +675,7 @@ export default function Home() {
               <p
                 className={`mt-5 text-2xl font-semibold tracking-tight ${savings >= 0 ? "text-lime-300" : "text-rose-300"}`}
               >
-                {savings < 0 ? "−" : "+"}
+                {savings < 0 ? "âˆ’" : "+"}
                 {money(Math.abs(savings), currency)}
               </p>
               <p className="mt-3 text-[11px] text-zinc-500">
@@ -809,7 +848,7 @@ export default function Home() {
                           <td
                             className={`py-4 text-right text-xs font-semibold whitespace-nowrap ${transaction.type === "income" ? "text-lime-300" : "text-zinc-300"}`}
                           >
-                            {transaction.type === "income" ? "+" : "−"}
+                            {transaction.type === "income" ? "+" : "âˆ’"}
                             {money(transaction.amount, currency)}
                           </td>
                         </tr>
@@ -883,7 +922,7 @@ export default function Home() {
           </div>
 
           <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80 py-5 text-[10px] text-zinc-600">
-            <span>Joma Finance · Demo environment</span>
+            <span>Joma Finance Â· Demo environment</span>
             <span>Personal finance, made clearer.</span>
           </footer>
         </div>
